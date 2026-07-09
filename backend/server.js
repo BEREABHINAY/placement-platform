@@ -16,8 +16,7 @@ const app = express();
 app.use(cors({
     origin: [
         "http://localhost:5173",
-        "https://placementprep-wheat.vercel.app",
-        process.env.CLIENT_URL
+        "https://placementprep-wheat.vercel.app"
     ],
     credentials: true,
 }));
