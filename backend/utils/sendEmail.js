@@ -2,18 +2,37 @@ import nodemailer from "nodemailer";
 
 let transporter = null;
 
+
 const getTransporter = () => {
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) return null;
+  console.log("SMTP_HOST:", process.env.SMTP_HOST);
+  console.log("SMTP_PORT:", process.env.SMTP_PORT);
+  console.log("SMTP_USER:", process.env.SMTP_USER);
+  console.log("SMTP_PASS Exists:", !!process.env.SMTP_PASS);
+
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    console.log("SMTP credentials missing");
+    return null;
+  }
+
   if (transporter) return transporter;
 
   transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT) || 587,
+    port: Number(process.env.SMTP_PORT),
     secure: false,
-    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+    requireTLS: true,
+    connectionTimeout: 30000,
+    greetingTimeout: 30000,
+    socketTimeout: 30000,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
   });
+
   return transporter;
 };
+
 
 // Sends the OTP by email. Falls back to logging in the console
 // when no SMTP credentials are configured, so local dev never blocks on email setup.
@@ -35,7 +54,10 @@ export const sendOtpEmail = async ({ to, code, purpose }) => {
 
   
 try {
-  const info = await t.sendMail({
+  await t.verify();
+console.log("✅ SMTP verified");
+
+const info = await t.sendMail({
     from: process.env.EMAIL_FROM,
     to,
     subject: subjectByPurpose[purpose] || "Your verification code",
