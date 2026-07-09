@@ -33,7 +33,9 @@ export const sendOtpEmail = async ({ to, code, purpose }) => {
     return { simulated: true };
   }
 
-  await t.sendMail({
+  
+try {
+  const info = await t.sendMail({
     from: process.env.EMAIL_FROM,
     to,
     subject: subjectByPurpose[purpose] || "Your verification code",
@@ -42,10 +44,21 @@ export const sendOtpEmail = async ({ to, code, purpose }) => {
         <h2 style="color:#0B0F1A;">Placement Platform</h2>
         <p>Your one-time verification code is:</p>
         <p style="font-size: 32px; font-weight: 700; letter-spacing: 8px; color:#FFB447;">${code}</p>
-        <p style="color:#6b7280; font-size: 14px;">This code expires in ${process.env.OTP_EXPIRY_MINUTES || 10} minutes. If you didn't request this, you can ignore this email.</p>
+        <p style="color:#6b7280; font-size: 14px;">
+          This code expires in ${process.env.OTP_EXPIRY_MINUTES || 10} minutes.
+          If you didn't request this, you can ignore this email.
+        </p>
       </div>
     `,
   });
 
+  console.log("✅ Email sent successfully:", info);
+
   return { simulated: false };
+
+} catch (err) {
+  console.error("❌ Email sending failed:", err);
+  throw err;
+}
+
 };
