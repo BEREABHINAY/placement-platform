@@ -13,6 +13,11 @@ export default function Scene3D({ className = "" }) {
     const mount = mountRef.current;
     if (!mount) return;
 
+    if (!window.WebGLRenderingContext) {
+      console.error("WebGL is not supported.");
+      return;
+    }
+
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
       55,
@@ -22,7 +27,23 @@ export default function Scene3D({ className = "" }) {
     );
     camera.position.set(0, 1.4, 9);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    let renderer;
+
+    try {
+      renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: true,
+      });
+
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(mount.clientWidth, mount.clientHeight);
+      mount.appendChild(renderer.domElement);
+    } catch (error) {
+      console.error("Failed to create WebGL renderer:", error);
+      return;
+    }
+
+
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(mount.clientWidth, mount.clientHeight);
     mount.appendChild(renderer.domElement);
@@ -114,8 +135,12 @@ export default function Scene3D({ className = "" }) {
     return () => {
       cancelAnimationFrame(frameId);
       window.removeEventListener("resize", handleResize);
-      mount.removeChild(renderer.domElement);
-      renderer.dispose();
+      if (renderer) {
+        if (renderer.domElement && mount.contains(renderer.domElement)) {
+          mount.removeChild(renderer.domElement);
+        }
+        renderer.dispose();
+      }
     };
   }, []);
 
